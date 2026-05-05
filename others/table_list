@@ -1,0 +1,118 @@
+table: roles
+id
+name
+
+table: users
+id
+name
+email
+password_hash
+role_id
+
+table: payment_method
+id
+name
+
+table: merchant
+id
+user_id
+bussiness_name
+phone_number
+balance
+
+table: top_up
+id
+ref_number
+merchant_id
+amount
+status
+request_at
+processed_by
+processed_at
+
+table: top_up_logs
+id
+top_up_id
+event
+actor_type
+actor_id
+old_status
+new_status
+balance_before
+balance_after
+created_at
+
+table: invoces
+id
+invoice_number
+merchant_id
+amount
+status
+due_date
+created_at
+updated_at
+cust_name
+cust_email
+description
+payment_link_token
+
+table: payment_intent
+id
+payment_intent_number
+invoice_id
+payment_method_id
+payed_by
+approved_by
+approved_at
+failure_reason
+expired_at
+status
+created_at
+
+table: payment_logs
+id
+payment_intent_id
+event
+actor_type
+actor_id
+old_status
+new_status
+meta_data
+created_at
+
+table: refunds
+id
+refund_number
+reason
+payment_intent_id
+invoice_id
+merchant_id
+amount
+status
+request_by
+approved_by
+approved_at
+processed_by
+processed_at
+created_at
+
+table: refund_logs
+id
+refund_id
+event
+actor_type
+actor_id
+old_status
+new_status
+created_at
+
+table: merchant_balance_log
+id
+merchant_id
+ref_number
+ref_id
+amount
+type
+balance_before
+balance_after
+created_at

@@ -1,0 +1,1047 @@
+basePath: /
+definitions:
+  model.ErrorBody:
+    properties:
+      code:
+        type: string
+      message:
+        type: string
+      status:
+        type: integer
+    type: object
+  model.InvoiceRequest:
+    properties:
+      amount:
+        type: integer
+      cust_email:
+        type: string
+      cust_name:
+        type: string
+      dueInDays:
+        type: integer
+    type: object
+  model.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  model.PaymentIntentRequest:
+    properties:
+      payment_method_id:
+        type: integer
+    type: object
+  model.Refund:
+    properties:
+      amount:
+        type: number
+      created_at:
+        type: string
+      decided_at:
+        description: nullable
+        type: string
+      decided_by:
+        description: nullable
+        type: integer
+      id:
+        type: integer
+      invoice_id:
+        type: integer
+      invoice_number:
+        type: string
+      merchant:
+        type: string
+      merchant_id:
+        type: integer
+      payment_intent_id:
+        type: integer
+      payment_intent_number:
+        type: string
+      processed_at:
+        description: nullable
+        type: string
+      processed_by:
+        description: nullable
+        type: integer
+      reason:
+        type: string
+      refund_number:
+        type: string
+      request_by:
+        type: integer
+      status:
+        type: string
+    type: object
+  model.RefundDecideRequestBody:
+    properties:
+      status:
+        enum:
+        - APPROVE
+        - REJECT
+        example: APPROVE
+        type: string
+    type: object
+  model.RefundRequest:
+    properties:
+      payment_intent_code:
+        type: string
+      reason:
+        type: string
+    type: object
+  model.RefundResponse:
+    properties:
+      data:
+        $ref: '#/definitions/model.Refund'
+      error:
+        $ref: '#/definitions/model.ErrorBody'
+    type: object
+  model.RegisterRequest:
+    properties:
+      business_name:
+        type: string
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+      phone_number:
+        type: string
+    required:
+    - business_name
+    - email
+    - name
+    - password
+    - phone_number
+    type: object
+  model.TopUpRequest:
+    properties:
+      amount:
+        type: number
+    type: object
+  model.UpdatePaymentIntentRequestBody:
+    properties:
+      failur_reason:
+        type: string
+      status:
+        enum:
+        - SUCCESS
+        - FAILED
+        example: SUCCESS
+        type: string
+    type: object
+  model.UpdateTopUpRequestBody:
+    properties:
+      status:
+        enum:
+        - SUCCESS
+        - FAILED
+        example: SUCCESS
+        type: string
+    type: object
+  response.ErrorResponse:
+    properties:
+      error:
+        $ref: '#/definitions/model.ErrorBody'
+    type: object
+  response.SuccessResponse:
+    properties:
+      data: {}
+      meta: {}
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API documentation for Project VioPal
+  title: VioPal
+  version: "1.0"
+paths:
+  /api/v1/admin/balance-requests:
+    get:
+      consumes:
+      - application/json
+      description: Get paginated list of all merchant top up requests with optional
+        filters
+      parameters:
+      - description: Page number (default 1)
+        example: 1
+        in: query
+        name: page
+        type: integer
+      - description: Items per page (default 10)
+        example: 10
+        in: query
+        name: perpage
+        type: integer
+      - description: Top up status
+        enum:
+        - PENDING
+        - SUCCESS
+        - FAILED
+        in: query
+        name: status
+        type: string
+      - description: Top up reference number
+        example: TOPUP-20260504-0001
+        in: query
+        name: ref_number
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List top up requests (Admin)
+      tags:
+      - Admin
+  /api/v1/admin/balance-requests/{ref_number}/status:
+    patch:
+      consumes:
+      - application/json
+      description: Update top up request status by reference number (Admin only)
+      parameters:
+      - description: Top Up Reference Number
+        in: path
+        name: ref_number
+        required: true
+        type: string
+      - description: Status only
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateTopUpRequestBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update top up request status
+      tags:
+      - Admin
+  /api/v1/admin/payment-intents:
+    get:
+      consumes:
+      - application/json
+      description: Get payment intent list with pagination and optional filters
+      parameters:
+      - description: Page number
+        example: 1
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        example: 10
+        in: query
+        name: perpage
+        type: integer
+      - description: Payment intent status
+        enum:
+        - PENDING
+        - SUCCESS
+        - FAILED
+        - EXPIRED
+        in: query
+        name: status
+        type: string
+      - description: Payment intent number
+        in: query
+        name: payment_intent_number
+        type: string
+      - description: Payment method ID
+        in: query
+        name: payment_method_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List payment intents
+      tags:
+      - Admin
+  /api/v1/admin/payment-intents/{payment_intent_number}/status:
+    patch:
+      consumes:
+      - application/json
+      description: Update payment intent status by payment intent number (Admin only).
+        If status is FAILED, failure_reason is required.
+      parameters:
+      - description: Payment Intent Number
+        in: path
+        name: payment_intent_number
+        required: true
+        type: string
+      - description: Update Payment Intent Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdatePaymentIntentRequestBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update payment intent status
+      tags:
+      - Admin
+  /api/v1/admin/refunds:
+    get:
+      consumes:
+      - application/json
+      description: Get paginated refund list with optional filters (status)
+      parameters:
+      - description: Page number (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: Items per page (default 10)
+        in: query
+        name: perpage
+        type: integer
+      - description: Invoice status (REQUESTED → APPROVED / REJECTED → SUCCESS / FAILED)
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List refund (Admin)
+      tags:
+      - Admin
+  /api/v1/admin/refunds/{refund_number}/decision:
+    patch:
+      consumes:
+      - application/json
+      description: Approve or reject a refund request. Only refunds with status REQUESTED
+        can be decided.
+      parameters:
+      - description: Refund Number
+        in: path
+        name: refund_number
+        required: true
+        type: string
+      - description: Refund decision payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.RefundDecideRequestBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.RefundResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorBody'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorBody'
+      security:
+      - BearerAuth: []
+      summary: Decide refund (approve/reject)
+      tags:
+      - '[ADMIN] Refund'
+  /api/v1/admin/refunds/{refund_number}/process:
+    patch:
+      consumes:
+      - application/json
+      description: Execute the refund process for a previously approved refund. This
+        will move the refund to a final state (e.g., SUCCESS or FAILED).
+      parameters:
+      - description: Refund Number
+        in: path
+        name: refund_number
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.RefundResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorBody'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorBody'
+      security:
+      - BearerAuth: []
+      summary: Process refund
+      tags:
+      - '[ADMIN] Refund'
+  /api/v1/admin/stats:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve invoice statistics filtered by merchant_id and created
+        date range
+      parameters:
+      - description: Merchant ID
+        in: query
+        name: merchant_id
+        type: integer
+      - description: Start created date (YYYY-MM-DD)
+        in: query
+        name: start_created_date
+        type: string
+      - description: End created date (YYYY-MM-DD)
+        in: query
+        name: end_created_date
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get invoice statistics
+      tags:
+      - Admin
+  /api/v1/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Login using email and password, returns JWT token
+      parameters:
+      - description: Login Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Login user
+      tags:
+      - Auth
+  /api/v1/auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Create new merchant user and merchant profile
+      parameters:
+      - description: Register Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Register merchant account
+      tags:
+      - Auth
+  /api/v1/balance-requests:
+    get:
+      consumes:
+      - application/json
+      description: Get paginated list of top up requests for authenticated merchant
+        with optional filters
+      parameters:
+      - description: Page number (default 1)
+        example: 1
+        in: query
+        name: page
+        type: integer
+      - description: Items per page (default 10)
+        example: 10
+        in: query
+        name: perpage
+        type: integer
+      - description: Top up status
+        enum:
+        - PENDING
+        - SUCCESS
+        - FAILED
+        in: query
+        name: status
+        type: string
+      - description: Top up reference number
+        example: TOPUP-20260504-0001
+        in: query
+        name: ref_number
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List top up requests
+      tags:
+      - Merchant Wallet
+      - Merchant Wallet
+    post:
+      consumes:
+      - application/json
+      description: Merchant request balance top up
+      parameters:
+      - description: Top Up Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.TopUpRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Request top up balance
+      tags:
+      - Merchant Wallet
+  /api/v1/invoices:
+    get:
+      consumes:
+      - application/json
+      description: Get paginated invoice list with optional filters (status, customer
+        name, email)
+      parameters:
+      - description: Page number (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: Items per page (default 10)
+        in: query
+        name: perpage
+        type: integer
+      - description: Invoice status (PENDING, PAID, EXPIRED)
+        in: query
+        name: status
+        type: string
+      - description: Customer name (partial match)
+        in: query
+        name: cust_name
+        type: string
+      - description: Customer email (partial match)
+        in: query
+        name: cust_email
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List invoices
+      tags:
+      - Invoice
+    post:
+      consumes:
+      - application/json
+      description: Create new invoice request for merchant
+      parameters:
+      - description: Invoice Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.InvoiceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create invoice
+      tags:
+      - Invoice
+  /api/v1/invoices/{code}:
+    get:
+      description: Get invoice detail using invoice code for authenticated user
+      parameters:
+      - description: Invoice code
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get invoice by code
+      tags:
+      - Invoice
+  /api/v1/me:
+    get:
+      consumes:
+      - application/json
+      description: Get profile data by email
+      parameters:
+      - description: User email
+        in: query
+        name: email
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user profile
+      tags:
+      - Auth
+  /api/v1/public/intents/{code}:
+    get:
+      description: Get payment intent detail using public intent code
+      parameters:
+      - description: Payment Intent Code
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Get payment intent by code
+      tags:
+      - Payment
+  /api/v1/public/pay/{token}:
+    get:
+      description: Process payment using payment link token
+      parameters:
+      - description: Payment Token
+        in: path
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Process payment by token
+      tags:
+      - Payment
+  /api/v1/public/pay/{token}/intents:
+    post:
+      consumes:
+      - application/json
+      description: Create payment intent using payment link token and selected payment
+        method
+      parameters:
+      - description: Payment Token
+        in: path
+        name: token
+        required: true
+        type: string
+      - description: Payment Method Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.PaymentIntentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Create payment intent
+      tags:
+      - Payment
+  /api/v1/refunds:
+    get:
+      consumes:
+      - application/json
+      description: Get paginated refund list with optional filters (status)
+      parameters:
+      - description: Page number (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: Items per page (default 10)
+        in: query
+        name: perpage
+        type: integer
+      - description: Invoice status (REQUESTED → APPROVED / REJECTED → SUCCESS / FAILED)
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List refund
+      tags:
+      - Refund
+    post:
+      consumes:
+      - application/json
+      description: Create a refund request based on payment intent code
+      parameters:
+      - description: Refund Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.RefundRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Request refund
+      tags:
+      - Refund
+  /api/v1/wallet:
+    get:
+      description: Get merchant balance from authenticated user token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get merchant wallet balance
+      tags:
+      - Merchant Wallet
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
